@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Цифровой транспорт · Личный кабинет</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Inter', system-ui, sans-serif;
+        }
+
+        body {
+            background: #1a2a36;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* ЭКРАН ВХОДА */
+        .login-screen {
+            background: #ffffff;
+            width: 100%;
+            max-width: 420px;
+            border-radius: 40px;
+            padding: 40px 32px;
+            box-shadow: 0 30px 50px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        .login-screen h2 {
+            color: #0b3954;
+            margin-bottom: 28px;
+            font-weight: 600;
+        }
+        .login-screen input {
+            width: 100%;
+            padding: 16px 20px;
+            margin: 12px 0;
+            border: 2px solid #cfdee9;
+            border-radius: 48px;
+            font-size: 1rem;
+            outline: none;
+            background: #fafdff;
+        }
+        .login-screen input:focus { border-color: #0b5e7c; }
+        .login-screen button {
+            background: #0b3954;
+            border: none;
+            color: white;
+            font-weight: 600;
+            padding: 16px 28px;
+            border-radius: 48px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            box-shadow: 0 8px 16px rgba(11,57,84,0.15);
+            transition: 0.15s;
+        }
+        .login-screen button:hover { background: #1b5e7a; }
+
+        /* ОСНОВНОЙ ЧАТ-БОТ */
+        .app-wrapper {
+            display: none;
+            width: 100%;
+            max-width: 1200px;
+            height: 780px;
+            position: relative;
+        }
+
+        .chatbot-container {
+            width: 100%;
+            height: 100%;
+            background: #ffffff;
+            border-radius: 32px;
+            box-shadow: 0 30px 50px rgba(0, 0, 0, 0.25);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(145deg, #0a1e2b 0%, #123b4f 100%);
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            border-bottom: 1px solid #2a5a70;
+        }
+        .chat-header h1 { font-size: 1.5rem; font-weight: 500; color: #e1f0fa; }
+        .chat-header .subtitle {
+            margin-left: auto;
+            font-size: 0.85rem;
+            background: rgba(70, 160, 200, 0.2);
+            padding: 6px 16px;
+            border-radius: 40px;
+            color: #c8e2f2;
+        }
+        .bot-avatar {
+            width: 42px; height: 42px; background: #1dd3b0; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; color: #0b1f29;
+        }
+        .profile-btn, .logout-header-btn {
+            background: none; border: 1.5px solid #3f7e9a; color: white;
+            padding: 8px 18px; border-radius: 40px; font-weight: 600;
+            cursor: pointer; margin-left: 8px; transition: 0.1s;
+        }
+        .profile-btn:hover, .logout-header-btn:hover { background: #1f5a73; }
+        .clear-chat { background: none; border: none; color: #d9ecf7; font-size: 1.2rem; cursor: pointer; margin-left: 8px; }
+
+        .chat-messages {
+            flex: 1; overflow-y: auto; padding: 22px; background: #f5f9fc;
+            display: flex; flex-direction: column; gap: 18px;
+        }
+        .message { display: flex; max-width: 88%; animation: fadeIn 0.2s; }
+        .message.bot { align-self: flex-start; }
+        .message.user { align-self: flex-end; }
+        .message-content {
+            padding: 14px 20px; border-radius: 22px; font-size: 0.95rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.02); word-break: break-word;
+        }
+        .bot .message-content { background: white; color: #1e3a4d; border: 1px solid #d3e3ed; border-bottom-left-radius: 6px; }
+        .user .message-content { background: #0e3d54; color: #f0f7ff; border-bottom-right-radius: 6px; }
+
+        .project-card {
+            margin-top: 12px; background: #f9fdff; border-radius: 20px; padding: 16px;
+            border: 1px solid #cbdde9;
+        }
+        .project-header { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+        .project-image { font-size: 32px; min-width: 40px; text-align: center; }
+        .project-title { font-weight: 700; font-size: 1.1rem; color: #0b3954; display: flex; flex-wrap: wrap; gap: 8px; }
+        .stage-badge {
+            padding: 4px 14px; border-radius: 40px; font-size: 0.75rem; font-weight: 600;
+            background: #d4e7f2; color: #0a3142; text-transform: uppercase;
+        }
+        .deadline { font-size: 0.92rem; margin: 10px 0 8px; color: #1c5770; font-weight: 500; }
+        .risks-list { margin: 10px 0 14px; padding-left: 22px; color: #2a4f64; }
+        .action-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+        .btn {
+            background: white; border: 1.5px solid #b8d2e3; padding: 7px 14px;
+            border-radius: 40px; font-size: 0.8rem; font-weight: 600; color: #0a3a4f;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+        }
+        .btn-primary { background: #0b3954; border-color: #0b3954; color: white; }
+        .btn-primary:hover { background: #1b5e7a; }
+
+        .quick-commands {
+            padding: 12px 24px; background: white; border-top: 1px solid #d2e0ea;
+            display: flex; flex-wrap: wrap; gap: 10px;
+        }
+        .quick-btn {
+            background: #ecf4fa; border: 1px solid #c2d8e8; padding: 8px 18px;
+            border-radius: 40px; font-size: 0.9rem; color: #0a3a4f; cursor: pointer;
+        }
+
+        .input-area {
+            display: flex; padding: 14px 24px 18px; background: white;
+            border-top: 1px solid #d2e0ea; gap: 12px;
+        }
+        .input-area input {
+            flex: 1; padding: 14px 20px; border: 2px solid #cfdee9;
+            border-radius: 48px; font-size: 0.95rem; background: #fafdff;
+        }
+        .input-area button {
+            background: #0b3954; border: none; color: white; font-weight: 600;
+            padding: 0 28px; border-radius: 48px; font-size: 1rem; cursor: pointer;
+        }
+
+        /* ЛИЧНЫЙ КАБИНЕТ */
+        .profile-panel {
+            position: absolute; top: 0; right: 0; width: 320px; height: 100%;
+            background: white; border-left: 1px solid #d2e0ea; z-index: 20;
+            transform: translateX(100%); transition: transform 0.25s ease;
+            display: flex; flex-direction: column;
+            border-radius: 0 32px 32px 0; box-shadow: -5px 0 20px rgba(0,0,0,0.05);
+        }
+        .profile-panel.open { transform: translateX(0); }
+        .panel-header {
+            padding: 22px 20px; border-bottom: 1px solid #e0ecf3;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .panel-header h3 { color: #0b3954; font-weight: 600; }
+        .close-panel { background: none; border: none; font-size: 24px; cursor: pointer; }
+        .panel-content { padding: 20px; overflow-y: auto; flex: 1; }
+        .user-info {
+            background: #eef3f8; border-radius: 20px; padding: 16px; margin-bottom: 24px;
+        }
+        .logout-btn {
+            background: none; border: 1.5px solid #b8d2e3; padding: 10px 16px;
+            border-radius: 40px; width: 100%; font-weight: 600; color: #0a3a4f;
+            cursor: pointer; margin-top: 16px; transition: 0.1s;
+        }
+        .logout-btn:hover { background: #e1eff8; }
+        .notes-list { list-style: none; }
+        .note-item {
+            background: #f9fdff; border: 1px solid #cbdde9; border-radius: 18px;
+            padding: 12px 14px; margin-bottom: 12px;
+        }
+        .note-project { font-weight: 700; color: #0b3954; margin-bottom: 6px; }
+        .note-text { font-size: 0.9rem; color: #2a4f64; }
+
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.35); backdrop-filter: blur(4px);
+            align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-card {
+            background: white; max-width: 420px; width: 90%; border-radius: 32px;
+            padding: 28px 26px; box-shadow: 0 30px 50px rgba(0,0,0,0.3);
+        }
+        .modal-card textarea {
+            width: 100%; padding: 14px; border-radius: 20px; border: 1.5px solid #cbdde9;
+            font-size: 0.95rem; margin: 16px 0; resize: vertical;
+        }
+        .close-modal { background: #0b3954; color: white; border: none; padding: 14px 24px; border-radius: 44px; width: 100%; cursor: pointer; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<!-- ЭКРАН ВХОДА -->
+<div id="loginScreen" class="login-screen">
+    <h2>🔐 Вход в систему</h2>
+    <input type="text" id="loginUsername" placeholder="Логин">
+    <input type="password" id="loginPassword" placeholder="Пароль">
+    <button id="loginBtn">Войти</button>
+</div>
+
+<!-- ОСНОВНОЙ ИНТЕРФЕЙС -->
+<div id="appWrapper" class="app-wrapper">
+    <div class="chatbot-container">
+        <div class="chat-header">
+            <div class="bot-avatar">📱</div>
+            <h1>Цифровой Транспорт</h1>
+            <span class="subtitle" id="userDisplayName">Пользователь</span>
+            <button class="profile-btn" id="openProfileBtn">👤 Кабинет</button>
+            <button class="logout-header-btn" id="headerLogoutBtn" title="Выйти">🚪</button>
+            <button class="clear-chat" id="clearChatBtn" title="Очистить диалог">🗑️</button>
+        </div>
+
+        <div class="chat-messages" id="chatMessages"></div>
+
+        <div class="quick-commands">
+            <button class="quick-btn" data-command="все проекты">📋 Все проекты</button>
+            <button class="quick-btn" data-command="разработка">💻 Разработка</button>
+            <button class="quick-btn" data-command="пилот">🧪 Пилот</button>
+            <button class="quick-btn" data-command="внедрение">🚀 Внедрение</button>
+            <button class="quick-btn" data-command="эксплуатация">⚙️ Эксплуатация</button>
+            <button class="quick-btn" data-command="модернизация">🔄 Модернизация</button>
+            <button class="quick-btn" data-command="помощь">❓ Помощь</button>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="userInput" placeholder="Пример: «риски Московский транспорт» или «дедлайн ИТС»" autocomplete="off">
+            <button id="sendBtn">➤ Отправить</button>
+        </div>
+    </div>
+
+    <!-- Боковая панель -->
+    <div class="profile-panel" id="profilePanel">
+        <div class="panel-header">
+            <h3>👤 Личный кабинет</h3>
+            <button class="close-panel" id="closeProfileBtn">✕</button>
+        </div>
+        <div class="panel-content">
+            <div class="user-info">
+                <div style="font-size:1.2rem; margin-bottom:6px;" id="panelUserName"></div>
+                <div style="color:#2f627a;">📧 <span id="panelUserLogin"></span></div>
+                <div style="margin-top:12px;">📌 Роль: менеджер проектов</div>
+                <button class="logout-btn" id="panelLogoutBtn">🚪 Выйти из аккаунта</button>
+            </div>
+            <h4 style="margin-bottom:14px; color:#0b3954;">📝 Мои заметки</h4>
+            <ul class="notes-list" id="notesListContainer"></ul>
+            <button class="btn" id="clearAllNotesBtn" style="margin-top:10px; width:100%;">🗑️ Очистить все заметки</button>
+        </div>
+    </div>
+</div>
+
+<!-- МОДАЛЬНЫЕ ОКНА -->
+<div class="modal" id="noteModal">
+    <div class="modal-card">
+        <h3>📝 Заметка к проекту</h3>
+        <p id="noteProjectName" style="font-weight:600; margin-bottom:8px;"></p>
+        <textarea id="noteTextArea" rows="4" placeholder="Введите вашу заметку..."></textarea>
+        <div style="display:flex; gap:10px;">
+            <button class="close-modal" id="saveNoteBtn" style="flex:2;">Сохранить</button>
+            <button class="btn" id="cancelNoteBtn" style="flex:1;">Отмена</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal" id="contactModal">
+    <div class="modal-card">
+        <h3>📞 Связь с ответственным</h3>
+        <div id="modalContactDetails"></div>
+        <button class="close-modal" id="closeContactModalBtn">Закрыть</button>
+    </div>
+</div>
+
+<script>
+    (function(){
+        "use strict";
+
+        // ---------- ДАННЫЕ ПРОЕКТОВ ----------
+        const projects = [
+            { id: 1, name: "Мобильное приложение «Московский транспорт»", image: "📱🚇", stage: "Эксплуатация", stageDescription: "Функционирует, регулярные обновления.", fullDescription: "Единое мобильное приложение для построения маршрутов, оплаты парковок, пополнения «Тройки».", organizations: "Департамент транспорта, ГКУ ЦОДД.", deadline: "Бессрочная поддержка", risks: ["Сбои платежей", "Нагрузки", "Безопасность"], responsible: { name: "Воронцов А.Д.", phone: "+7 (495) 123-45-67", email: "vorontsov@mosapps.ru", dept: "Цифровое развитие" } },
+            { id: 2, name: "Цифровая платформа «Единый билет»", image: "🎫💳", stage: "Внедрение", stageDescription: "Развертывание виртуальной Тройки.", fullDescription: "Бесконтактная оплата с биометрией.", organizations: "Метрополитен, ВТБ.", deadline: "IV кв. 2026", risks: ["Интеграция", "Кибератаки"], responsible: { name: "Колесникова М.", phone: "+7 (495) 777-88-99", email: "kolesnikova@edinybilet.mos", dept: "Мосгортранс" } },
+            { id: 3, name: "ИТС Москвы", image: "🚦🤖", stage: "Модернизация", stageDescription: "ИИ-светофоры.", fullDescription: "Адаптивное управление движением.", organizations: "ЦОДД, Яндекс.", deadline: "2025", risks: ["Детекторы", "Синхронизация"], responsible: { name: "Гриднев П.", phone: "+7 (495) 957-00-11", email: "gridnev@its.mos.ru", dept: "ЦОДД" } },
+            { id: 4, name: "Мультипарковка", image: "🅿️📲", stage: "Пилот", stageDescription: "Динамические тарифы.", fullDescription: "Цифровая парковка.", organizations: "АМПП, ПаркТех.", deadline: "дек 2024", risks: ["Камеры", "Жалобы"], responsible: { name: "Яшина О.", phone: "+7 (495) 539-22-33", email: "yashina@parking.mos", dept: "АМПП" } },
+            { id: 5, name: "Цифровой двойник метро", image: "🚇👥", stage: "Разработка", stageDescription: "3D-модель и IoT.", fullDescription: "Виртуальная копия метрополитена.", organizations: "Метрополитен, Мосинжпроект.", deadline: "2027", risks: ["BIM", "Сканирование"], responsible: { name: "Белоусов И.", phone: "+7 (495) 622-14-40", email: "belousov@mosmetro.ru", dept: "Цифровой метрополитен" } },
+            { id: 6, name: "МосОблако Транспорт", image: "☁️🚌", stage: "Разработка", stageDescription: "Облачная платформа.", fullDescription: "Импортозамещенное облако.", organizations: "ДИТ, Росэлектроника.", deadline: "II кв. 2025", risks: ["Оборудование", "ФСТЭК"], responsible: { name: "Серова Е.", phone: "+7 (495) 620-49-00", email: "serova@moscloud.ru", dept: "ДИТ" } }
+        ];
+
+        let currentUser = { name: 'Пользователь', login: 'user@transport' };
+        let notesDB = {};
+
+        // DOM
+        const loginScreen = document.getElementById('loginScreen');
+        const appWrapper = document.getElementById('appWrapper');
+        const loginBtn = document.getElementById('loginBtn');
+        const loginUsername = document.getElementById('loginUsername');
+        const userDisplayName = document.getElementById('userDisplayName');
+        const panelUserName = document.getElementById('panelUserName');
+        const panelUserLogin = document.getElementById('panelUserLogin');
+        const profilePanel = document.getElementById('profilePanel');
+        const openProfileBtn = document.getElementById('openProfileBtn');
+        const closeProfileBtn = document.getElementById('closeProfileBtn');
+        const chatMessages = document.getElementById('chatMessages');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const clearChatBtn = document.getElementById('clearChatBtn');
+        const notesListContainer = document.getElementById('notesListContainer');
+        const noteModal = document.getElementById('noteModal');
+        const noteProjectName = document.getElementById('noteProjectName');
+        const noteTextArea = document.getElementById('noteTextArea');
+        const saveNoteBtn = document.getElementById('saveNoteBtn');
+        const cancelNoteBtn = document.getElementById('cancelNoteBtn');
+        const contactModal = document.getElementById('contactModal');
+        const modalContactDetails = document.getElementById('modalContactDetails');
+        const closeContactModalBtn = document.getElementById('closeContactModalBtn');
+        const clearAllNotesBtn = document.getElementById('clearAllNotesBtn');
+        const panelLogoutBtn = document.getElementById('panelLogoutBtn');
+        const headerLogoutBtn = document.getElementById('headerLogoutBtn');
+
+        let currentNoteProjectId = null;
+
+        // Загрузка заметок
+        function loadNotes() {
+            const saved = localStorage.getItem('transportNotes');
+            notesDB = saved ? JSON.parse(saved) : {};
+        }
+        function saveNotes() { localStorage.setItem('transportNotes', JSON.stringify(notesDB)); }
+        loadNotes();
+
+        // Выход
+        function logout() {
+            loginUsername.value = '';
+            document.getElementById('loginPassword').value = '';
+            loginScreen.style.display = 'block';
+            appWrapper.style.display = 'none';
+            profilePanel.classList.remove('open');
+            // не сбрасываем notesDB, чтобы сохранить для след. входа
+        }
+        panelLogoutBtn.addEventListener('click', logout);
+        headerLogoutBtn.addEventListener('click', logout);
+
+        // Вход
+        loginBtn.addEventListener('click', () => {
+            const name = loginUsername.value.trim() || 'Гость';
+            currentUser = { name: name, login: name.toLowerCase().replace(/\s/g, '') + '@transport' };
+            userDisplayName.textContent = name;
+            panelUserName.textContent = name;
+            panelUserLogin.textContent = currentUser.login;
+            loginScreen.style.display = 'none';
+            appWrapper.style.display = 'block';
+            resetChat();
+            updateNotesPanel();
+        });
+
+        // Кабинет
+        openProfileBtn.addEventListener('click', () => { profilePanel.classList.add('open'); updateNotesPanel(); });
+        closeProfileBtn.addEventListener('click', () => profilePanel.classList.remove('open'));
+
+        function updateNotesPanel() {
+            const map = Object.fromEntries(projects.map(p=>[p.id, p]));
+            let html = '';
+            for (let id in notesDB) {
+                if (notesDB[id]?.trim()) {
+                    const p = map[id];
+                    if (p) html += `<li class="note-item"><div class="note-project">📌 ${p.name}</div><div class="note-text">${escapeHtml(notesDB[id])}</div></li>`;
+                }
+            }
+            notesListContainer.innerHTML = html || '<p style="color:#6f8a9b;">Нет заметок</p>';
+        }
+        function escapeHtml(t) { return String(t).replace(/</g,'&lt;'); }
+
+        clearAllNotesBtn.addEventListener('click', ()=>{
+            notesDB = {};
+            saveNotes();
+            updateNotesPanel();
+            addMessage('🗑️ Заметки удалены.', 'bot');
+        });
+
+        // Заметка
+        function openNoteModal(id) {
+            const p = projects.find(x=>x.id===id);
+            if(!p) return;
+            currentNoteProjectId = id;
+            noteProjectName.textContent = p.name;
+            noteTextArea.value = notesDB[id] || '';
+            noteModal.style.display = 'flex';
+        }
+        saveNoteBtn.addEventListener('click', ()=>{
+            if(currentNoteProjectId){
+                const txt = noteTextArea.value.trim();
+                if(txt) notesDB[currentNoteProjectId] = txt;
+                else delete notesDB[currentNoteProjectId];
+                saveNotes();
+                updateNotesPanel();
+                addMessage(`📝 Заметка сохранена.`, 'bot');
+            }
+            noteModal.style.display = 'none';
+        });
+        cancelNoteBtn.addEventListener('click', ()=>noteModal.style.display='none');
+        window.addEventListener('click', e=>{ if(e.target===noteModal) noteModal.style.display='none'; });
+
+        // Сообщения
+        function addMessage(text, sender='bot', extra='') {
+            const div = document.createElement('div');
+            div.className = `message ${sender}`;
+            const c = document.createElement('div');
+            c.className = 'message-content';
+            c.innerHTML = sender==='bot' ? text+extra : text;
+            div.appendChild(c);
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        function resetChat() { chatMessages.innerHTML = ''; addMessage(`👋 Добро пожаловать, ${currentUser.name}!`, 'bot'); }
+
+        function renderCompact(p) {
+            return `<div class="project-card"><div class="project-header"><div class="project-image">${p.image}</div><div class="project-title">${p.name}<span class="stage-badge">${p.stage}</span></div></div><div>${p.stageDescription}</div><div class="deadline">⏱️ ${p.deadline}</div><div class="action-buttons"><button class="btn btn-primary full-info-btn" data-id="${p.id}">📄 Полная</button><button class="btn contact-btn" data-id="${p.id}">📞</button><button class="btn detail-btn" data-id="${p.id}" data-action="risks">📊</button><button class="btn detail-btn" data-id="${p.id}" data-action="deadline">⏳</button><button class="btn note-btn" data-id="${p.id}">📝</button></div></div>`;
+        }
+
+        function showByStage(filter) {
+            let filtered = projects;
+            if(filter) filtered = projects.filter(p=>p.stage.toLowerCase().includes(filter.toLowerCase()));
+            const h = filter ? `📁 ${filter} (${filtered.length})` : `📋 Все (${filtered.length})`;
+            let html = `<div>`+filtered.map(renderCompact).join('')+`</div>`;
+            addMessage(h, 'bot', html);
+            attachListeners();
+        }
+
+        function processInput(txt) {
+            if(!txt) return;
+            addMessage(txt, 'user');
+            const t = txt.toLowerCase();
+            if(t.includes('помощь')) { addMessage('📘 все проекты, разработка, пилот, внедрение, эксплуатация, модернизация', 'bot'); return; }
+            if(t.includes('все проекты')) { showByStage(null); return; }
+            if(t.includes('разработка')) { showByStage('Разработка'); return; }
+            if(t.includes('пилот')) { showByStage('Пилот'); return; }
+            if(t.includes('внедрение')) { showByStage('Внедрение'); return; }
+            if(t.includes('эксплуатация')) { showByStage('Эксплуатация'); return; }
+            if(t.includes('модернизация')) { showByStage('Модернизация'); return; }
+
+            const p = projects.find(x=>x.name.toLowerCase().includes(t));
+            if(!p) { addMessage('❌ Не найден', 'bot'); return; }
+            if(t.includes('риск')) {
+                addMessage(`⚠️ ${p.name}<ul class="risks-list">`+p.risks.map(r=>`<li>${r}</li>`).join('')+`</ul>`, 'bot', `<button class="btn contact-btn" data-id="${p.id}">📞</button>`);
+                attachListeners(); return;
+            }
+            if(t.includes('дедлайн')) { addMessage(`⏱️ ${p.deadline}`, 'bot'); return; }
+            if(t.includes('контакт')) { showContact(p); return; }
+
+            addMessage(`🔎 ${p.name}`, 'bot', renderFull(p));
+            attachListeners();
+        }
+
+        function renderFull(p) {
+            return `<div class="project-card"><div class="project-header"><div class="project-image">${p.image}</div><div class="project-title">${p.name}<span class="stage-badge">${p.stage}</span></div></div><div>${p.fullDescription}</div><div><strong>Организации:</strong> ${p.organizations}</div><div class="deadline">⏱️ ${p.deadline}</div><div class="action-buttons"><button class="btn btn-primary full-info-btn" data-id="${p.id}">📄</button><button class="btn contact-btn" data-id="${p.id}">📞</button><button class="btn detail-btn" data-id="${p.id}" data-action="risks">📊</button><button class="btn note-btn" data-id="${p.id}">📝</button></div></div>`;
+        }
+
+        function showContact(p) {
+            modalContactDetails.innerHTML = `<div><strong>${p.name}</strong></div><div class="contact-info">👤 ${p.responsible.name}<br>📞 ${p.responsible.phone}<br>✉️ ${p.responsible.email}<br>${p.responsible.dept}</div>`;
+            contactModal.style.display = 'flex';
+        }
+
+        function attachListeners() {
+            document.querySelectorAll('.contact-btn').forEach(b=>{ b.removeEventListener('click', hContact); b.addEventListener('click', hContact); });
+            document.querySelectorAll('.detail-btn').forEach(b=>{ b.removeEventListener('click', hDetail); b.addEventListener('click', hDetail); });
+            document.querySelectorAll('.full-info-btn').forEach(b=>{ b.removeEventListener('click', hFull); b.addEventListener('click', hFull); });
+            document.querySelectorAll('.note-btn').forEach(b=>{ b.removeEventListener('click', hNote); b.addEventListener('click', hNote); });
+        }
+        function hContact(e) { const p = projects.find(x=>x.id==e.currentTarget.dataset.id); if(p) showContact(p); }
+        function hDetail(e) {
+            const p = projects.find(x=>x.id==e.currentTarget.dataset.id);
+            if(!p) return;
+            if(e.currentTarget.dataset.action==='risks') addMessage(`⚠️ `+p.risks.map(r=>`• ${r}`).join('<br>'), 'bot');
+            else addMessage(`⏱️ ${p.deadline}`, 'bot');
+        }
+        function hFull(e) { const p = projects.find(x=>x.id==e.currentTarget.dataset.id); if(p) { addMessage(`📄 ${p.name}`, 'bot', renderFull(p)); attachListeners(); } }
+        function hNote(e) { openNoteModal(+e.currentTarget.dataset.id); }
+
+        sendBtn.addEventListener('click', ()=>{ processInput(userInput.value); userInput.value = ''; });
+        userInput.addEventListener('keypress', e=>{ if(e.key==='Enter'){ e.preventDefault(); processInput(userInput.value); userInput.value=''; }});
+        clearChatBtn.addEventListener('click', resetChat);
+        document.querySelectorAll('.quick-btn').forEach(b=>b.addEventListener('click', ()=>{ userInput.value = b.dataset.command; processInput(userInput.value); userInput.value=''; }));
+        closeContactModalBtn.addEventListener('click', ()=>contactModal.style.display='none');
+        window.addEventListener('click', e=>{ if(e.target===contactModal) contactModal.style.display='none'; });
+
+        new MutationObserver(()=>attachListeners()).observe(chatMessages, {childList:true, subtree:true});
+    })();
+</script>
+</body>
+</html>
